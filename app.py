@@ -10,6 +10,7 @@ import cv2
 from matplotlib import pyplot
 from mtcnn.mtcnn import MTCNN
 import numpy as np
+import openai
 from twilio.rest import Client
 import imutils
 from xmlrpc.client import boolean
@@ -55,20 +56,9 @@ def login():
 
 
 
-@app.route('/registro', methods = ["GET", "POST"])
-def registro():
 
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM tip_usu")
-    tipo = cur.fetchall()
 
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM sexo_interes")
-    interes = cur.fetchall()
 
-    cur.close()
-
-    notificacion = Notify()
     
     
 
@@ -76,23 +66,12 @@ def registro():
         return render_template("registro.html", tipo = tipo, interes = interes )
     
     else:
-        name = request.form['name']
-        email = request.form['email']
-        password = request.form['password']
-        tip = request.form['tipo']
-        interes = request.form['interes']
-
-        cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO users (name, email, password, id_tip_usu, interes) VALUES (%s,%s,%s,%s,%s)", (name, email, password,tip,interes,))
-        mysql.connection.commit()
-       
-     
-        notificacion.send()
+    
         return redirect(url_for('login'))
 
 def baseAlgoritmo():
         personName = 'DEST'
-        dataPath = 'C:/Users/USER/Desktop/ESFOT 4/proyecyo3/prote/paginaWeb-proyecto/ImagenesBase'#Cambia a la ruta donde hayas almacenado Data
+        dataPath = 'C:/Users/jevia/OneDrive/Escritorio/6to Ciberseguridad/ProyectoIA/ImagenesBase'#Cambia a la ruta donde hayas almacenado Data
 
         personPath = dataPath + '/' + personName
         if not os.path.exists(personPath):
@@ -126,7 +105,7 @@ def baseAlgoritmo():
 
 def entrenamientoAlgoritmo():
     # Cambia a la ruta donde hayas almacenado Data
-    dataPath = 'C:/Users/USER/Desktop/ESFOT 4/proyecyo3/prote/paginaWeb-proyecto/ImagenesBase'#Cambia a la ruta donde hayas almacenado Data
+    dataPath = 'C:/Users/jevia/OneDrive/Escritorio/6to Ciberseguridad/ProyectoIA/ImagenesBase'#Cambia a la ruta donde hayas almacenado Data
 
     peopleList = os.listdir(dataPath)
     print('Lista de personas: ', peopleList)
@@ -169,7 +148,7 @@ def pruebaAlgoritmo():
     frm = ttk.Frame(root, padding=10)
     frm.grid()
     # Cambia a la ruta donde hayas almacenado Data
-    dataPath = 'C:/Users/USER/Desktop/ESFOT 4/proyecyo3/prote/paginaWeb-proyecto/ImagenesBase'#Cambia a la ruta donde hayas almacenado Data
+    dataPath = 'C:/Users/jevia/OneDrive/Escritorio/6to Ciberseguridad/ProyectoIA/ImagenesBase'#Cambia a la ruta donde hayas almacenado Data
 
     imagePaths = os.listdir(dataPath)
     print('imagePaths=', imagePaths)
@@ -564,8 +543,18 @@ def faceId():
 
     
 
+
 #/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     
+
+        
+@app.route('/video',  methods= ["GET", "POST"])
+def video():
+    return Response(faceId(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+openai.api_key ='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'
+
 def get_completion(prompt):
 	print(prompt)
 	query = openai.Completion.create(
@@ -576,24 +565,38 @@ def get_completion(prompt):
 		stop=None,
 		temperature=0.5,
 	)
-        
-@app.route('/video',  methods= ["GET", "POST"])
-def video():
-    return Response(faceId(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-@app.route('/profile', methods=["GET", "POST"])
+	response = query.choices[0].text
+	return response
+
+@app.route("/", methods=['POST', 'GET'])
+def query_view():
+	if request.method == 'POST':
+		print('step1')
+		prompt = request.form['prompt']
+		response = get_completion(prompt)
+		print(response)
+
+		return jsonify({'response': response})
+	return render_template('profile.html')
+
+@app.route('/profile', methods=['POST', 'GET'])
 def profile():
     # session.clear()
+    
     if comprobador == False:
         return redirect(url_for("home"))
-    else:
-        if request.method == 'POST':
-            print('step1')
-            prompt = request.form['prompt']
-            response = get_completion(prompt)
-            print(response)
-            return jsonify({'response': response})
+    
+    if request.method == 'POST':
+        print('step1')
+        prompt = request.form['prompt']
+        response = get_completion(prompt)
+        print(response)
+        return jsonify({'response': response})
+    
     return render_template("profile.html")
+
+
 
 if __name__ == '__main__':
     app.secret_key = "pinchellave"
