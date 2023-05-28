@@ -1,6 +1,6 @@
 import mimetypes
 import tkinter
-from flask import Flask,  render_template, request, redirect, url_for, session, Response , jsonify# pip install Flask
+from flask import Flask,  render_template, request, redirect, url_for, session, Response,jsonify # pip install Flask
 from flask_mysqldb import MySQL,MySQLdb # pip install Flask-MySQLdb
 from os import path #pip install notify-py
 from notifypy import Notify
@@ -15,9 +15,6 @@ import imutils
 from xmlrpc.client import boolean
 from tkinter import ttk
 
-import openai
-
-openai.api_key ='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'
 account = "AC1438004459be7b7a65289bbc37487091"
 token = "41725217cf0c69de80a992025c85b388"
 client = Client(account, token)
@@ -88,14 +85,14 @@ def registro():
         cur = mysql.connection.cursor()
         cur.execute("INSERT INTO users (name, email, password, id_tip_usu, interes) VALUES (%s,%s,%s,%s,%s)", (name, email, password,tip,interes,))
         mysql.connection.commit()
-        notificacion.title = "Registro Exitoso"
-        notificacion.message="ya te encuentras registrado en 🤵 MORE LOVE 👰, por favor inicia sesión y empieza a descubrir este nuevo mundo."
+       
+     
         notificacion.send()
         return redirect(url_for('login'))
 
 def baseAlgoritmo():
         personName = 'DEST'
-        dataPath = 'ImagenesBase'#Cambia a la ruta donde hayas almacenado Data
+        dataPath = 'C:/Users/USER/Desktop/ESFOT 4/proyecyo3/prote/paginaWeb-proyecto/ImagenesBase'#Cambia a la ruta donde hayas almacenado Data
 
         personPath = dataPath + '/' + personName
         if not os.path.exists(personPath):
@@ -129,7 +126,7 @@ def baseAlgoritmo():
 
 def entrenamientoAlgoritmo():
     # Cambia a la ruta donde hayas almacenado Data
-    dataPath = 'ImagenesBase'#Cambia a la ruta donde hayas almacenado Data
+    dataPath = 'C:/Users/USER/Desktop/ESFOT 4/proyecyo3/prote/paginaWeb-proyecto/ImagenesBase'#Cambia a la ruta donde hayas almacenado Data
 
     peopleList = os.listdir(dataPath)
     print('Lista de personas: ', peopleList)
@@ -172,7 +169,7 @@ def pruebaAlgoritmo():
     frm = ttk.Frame(root, padding=10)
     frm.grid()
     # Cambia a la ruta donde hayas almacenado Data
-    dataPath = 'ImagenesBase'#Cambia a la ruta donde hayas almacenado Data
+    dataPath = 'C:/Users/USER/Desktop/ESFOT 4/proyecyo3/prote/paginaWeb-proyecto/ImagenesBase'#Cambia a la ruta donde hayas almacenado Data
 
     imagePaths = os.listdir(dataPath)
     print('imagePaths=', imagePaths)
@@ -357,7 +354,7 @@ def faceId():
             if log_contra in verificacion:
                 print("Inicio de sesion exitoso")
                 Label(pantalla2, text = "Inicio de Sesion Exitososssss", fg = "green", font = ("Calibri",11)).pack()
-                message = client.messages.create(to="+593939305304", from_="+12535232583", body="Inicio de Sesion Exitososssss")
+                # message = client.messages.create(to="+593939305304", from_="+12535232583", body="Inicio de Sesion Exitososssss")
             else:
                 print("Contraseña incorrecta, ingrese de nuevo")
                 Label(pantalla2, text = "Contraseña Incorrecta", fg = "red", font = ("Calibri",11)).pack()
@@ -428,13 +425,13 @@ def faceId():
             rostro_reg = cv2.imread(usuario_login+".jpg",0)     
             rostro_log = cv2.imread(usuario_login+"LOG.jpg",0)
             similitud = orb_sim(rostro_reg, rostro_log)
-            if similitud >= 0.7:
+            if similitud >= 0.98:
                 Label(pantalla2, text = "Inicio de Sesion Exitoso", fg = "green", font = ("Calibri",11)).pack()
                 # message = client.messages.create(to="+593967165147", from_="+12535232583", body="Inicio de Sesion Exitososssss")
                 global comprobador
                 comprobador = True
                 print("Bienvenido al sistema usuario: ",usuario_login)
-                print("Compatibilidad con la foto del registroA: ",similitud)
+                print("Compatibilidad con la foto del registro: ",similitud)
                 print("Redirigiendo . . . . . : ",comprobador)
                 if(comprobador == True):
                     print("ESTOY EN LA REDIRECCION DEL PERFIL")
@@ -443,7 +440,7 @@ def faceId():
                     redirect("/login")
             else:
                 print("Rostro incorrecto, Cerifique su usuario")
-                print("Compatibilidad con la foto del registroA: ",similitud)
+                print("Compatibilidad con la foto del registro: ",similitud)
                 Label(pantalla2, text = "Incompatibilidad de rostros", fg = "red", font = ("Calibri",11)).pack()
         else:
             print("Usuario no encontrado")
@@ -566,6 +563,9 @@ def faceId():
     return redirect(url_for("login"))
 
     
+
+#/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
 def get_completion(prompt):
 	print(prompt)
 	query = openai.Completion.create(
@@ -576,37 +576,24 @@ def get_completion(prompt):
 		stop=None,
 		temperature=0.5,
 	)
-
-	response = query.choices[0].text
-	return response
         
-#/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
-
 @app.route('/video',  methods= ["GET", "POST"])
 def video():
     return Response(faceId(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-
-
-
-@app.route('/', methods=['POST', 'GET'])
-def query_view():
-    if request.method == 'POST':
-        print('step1')
-        prompt = request.form['prompt']
-        response = get_completion(prompt)
-        print(response)
-
-        return jsonify({'response': response})
-    return render_template('profile.html')
-
 @app.route('/profile', methods=["GET", "POST"])
 def profile():
-    if "comprobador" in session and not session["comprobador"]:
+    # session.clear()
+    if comprobador == False:
         return redirect(url_for("home"))
     else:
-        return render_template("profile.html")
+        if request.method == 'POST':
+            print('step1')
+            prompt = request.form['prompt']
+            response = get_completion(prompt)
+            print(response)
+            return jsonify({'response': response})
+    return render_template("profile.html")
 
 if __name__ == '__main__':
     app.secret_key = "pinchellave"
